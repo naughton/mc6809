@@ -841,7 +841,7 @@ module mc6809 {
             var oldval = val;
             var oldc = this.regCC & F.CARRY; /* Preserve old carry flag */
             this.regCC &= ~(F.ZERO | F.CARRY | F.OVERFLOW | F.NEGATIVE);
-            if (val & 080)
+            if (val & 0x80)
                 this.regCC |= F.CARRY;
             val = val << 1 | oldc;
             val &= 0xff;
