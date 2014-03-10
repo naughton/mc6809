@@ -200,12 +200,12 @@ module Defender {
                       bit 4  Left Coin
                       bit 5  Center Coin
                     */
-                    var autoup = this.KEY_STATUS['1'];
-                    var advance = this.KEY_STATUS['2'];
-                    var rightcoin = this.KEY_STATUS['3'];
-                    var highscorereset = this.KEY_STATUS['4'];
-                    var leftcoin = this.KEY_STATUS['5'];
-                    var centercoin = this.KEY_STATUS['6'];
+                    var autoup = this.KEY_STATUS['F1'];
+                    var advance = this.KEY_STATUS['F2'];
+                    var rightcoin = this.KEY_STATUS['F3'];
+                    var highscorereset = this.KEY_STATUS['F4'];
+                    var leftcoin = this.KEY_STATUS['F5'];
+                    var centercoin = this.KEY_STATUS['F6'];
 
                     var pia1_dataa = centercoin << 5 | leftcoin << 4 | highscorereset << 3 | rightcoin << 2 | advance << 1 | autoup;
                     //if (pia1_dataa != 0)
