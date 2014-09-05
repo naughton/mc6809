@@ -1,4 +1,4 @@
-/// <reference path="Scripts/typings/jquery/jquery.d.ts" />
+/// <reference path="references.ts" />
 
 module mc6809 {
     enum F {
