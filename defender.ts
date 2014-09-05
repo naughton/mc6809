@@ -1,19 +1,10 @@
-/// <reference path="Scripts/typings/jquery/jquery.d.ts" />
-/// <reference path="mc6809.ts" />
+/// <reference path="references.ts" />
 
 var game;
 
 window.onload = () => {
     game = new Defender.Game();
 };
-
-window.performance = window.performance || {};
-performance.now = (() => performance.now ||
-    performance.mozNow ||
-    performance.msNow ||
-    performance.oNow ||
-    performance.webkitNow ||
-    Date.now)();
 
 module Defender {
 
@@ -83,9 +74,9 @@ module Defender {
             this.debugTxt.innerText = "foobar";
             this.breakpoint = <HTMLInputElement>document.getElementById('breakpoint');
             this.ctx = this.canvas.getContext('2d');
-            this.ctx.imageSmoothingEnabled = false;
-            this.ctx.mozImageSmoothingEnabled = false;
-            this.ctx.webkitImageSmoothingEnabled = false;
+            (<any>this.ctx).imageSmoothingEnabled = false;
+            (<any>this.ctx).mozImageSmoothingEnabled = false;
+            (<any>this.ctx).webkitImageSmoothingEnabled = false;
             // read the width and height of the canvas
             this.w = this.canvas.width;
             this.h = this.canvas.height;
@@ -163,21 +154,20 @@ module Defender {
         private piaWrite = (index: number, val: number) => {
             switch (index) {
                 case 1:
-                    console.log('PIA 1A <- ' + val);
+                    console.log('pia1_ctrla(' + val + ')');
                     break;
                 case 3:
                     // cc03 pia1_ctrlb (CB2 select between player 1 and player 2 controls if Table)
-                    console.log('PIA 1B <- ' + val);
+                    console.log('pia1_ctrlb(' + val + ')');
                     console.log('PLAYER ' + (val + 1));
                     break;
                 case 5:
                     // pia2_ctrla
-                    console.log('PIA 2A <- ' + val);
+                    console.log('pia2_ctrla(' + val + ')');
                     break;
                 case 7:
                     // pia2_ctrlb   Control the IRQ
-                    console.log('PIA 2B <- ' + val);
-                    console.log('Control the IRQ');
+                    console.log('pia2_ctrlb(' + val + ')   // Control the IRQ');
                     break;
 
                 default:
@@ -193,7 +183,7 @@ module Defender {
             switch (addr) {
                 case 0xcc00: // cc00 pia1_dataa (widget = I/O board)
                     /*
-                      bit 0  Auto Up
+                      bit 0  Auto/Up - or Manual/Down
                       bit 1  Advance
                       bit 2  Right Coin
                       bit 3  High Score Reset
@@ -224,7 +214,7 @@ module Defender {
             } else {
                 console.log("writing " + val + " to address " + addr.toString(16) + " while on bank #" + this.bank);
                 console.log(this.cpu.state());
-                this.halt();
+               // this.halt();
             }
         }
 
@@ -244,7 +234,7 @@ module Defender {
         private bankSelectRead = (addr: number): number=> {
             console.log("Bank Read: " + this.bank + " addr: " + addr.toString(16) + ' called from ' + this.cpu.regPC.toString(16));
             //console.log(this.cpu.state());
-            return this.bank;
+            return this.cpu.readByteROM(0xd000);
         }
 
         private load = (rom: mc6809.ROM) => {
