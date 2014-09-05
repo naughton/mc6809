@@ -1,0 +1,66 @@
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="mc6809.js"></script>
+    <script src="defender.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #0f0;
+        }
+        canvas {
+            border: 1px solid #333;
+            background: black;
+            image-rendering: optimizeSpeed;
+            image-rendering:-o-crisp-edges;
+            image-rendering:-webkit-optimize-contrast;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+        #debugTxt {
+            font-family: Consolas, 'Lucida Console', 'DejaVu Sans Mono', monospace;
+        }
+        textarea {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: orange;
+        }
+
+        input {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: Consolas, 'Lucida Console', 'DejaVu Sans Mono', monospace;
+            font-weight: bold;
+            color: hotpink;
+        }
+    </style>
+    <title>
+        Defender (6809 Emulator)
+    </title>
+</head>
+<body>
+    <canvas id="mainCanvas" width="304" height="256">
+    </canvas>
+    <br/>
+    <button onclick="game.blit()">Blit</button>
+    <button onclick="game.step(1)">Step</button>
+    <button onclick="game.step(16)">Step16</button>
+    <button onclick="game.step(256)">Step256</button>
+    <button onclick="game.run()">Run</button>
+    <button onclick="game.halt()">Halt</button>
+    <button onclick="game.debug()">Debug</button>
+
+    <input id="breakpoint" value="CAF9" />
+    <div id="debugTxt"></div>
+    <input id="centerCoin" title="center coin" type="checkbox" />
+    <input id="leftCoin" title="left coin" type="checkbox" />
+    <input id="highscoreReset" title="reset high score" type="checkbox" />
+    <input id="rightCoin" title="right coin" type="checkbox" />
+    <input id="advance" title="advance" type="checkbox" />
+    <input id="autoup" title="auto up" type="checkbox" />
+    <div id="timeTxt"></div>
+</body>
+</html>
