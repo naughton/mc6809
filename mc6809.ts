@@ -145,6 +145,20 @@ module mc6809 {
             return s;
         }
 
+        public dumpmem(addr:number, count:number) {
+            for (var a = addr; a < addr + count; a++) {
+                console.log(a.toString(16) + " " + this.hex(this.M6809ReadByte(a), 2));
+            }
+        }
+
+        public dumpstack(count:number) {
+            var addr = this.regS;
+            for (var i=0; i < count; i++) {
+                console.log(this.hex(this.M6809ReadWord(addr), 4));
+                addr += 2;
+            }
+        }
+
         public stateToString = (): string=> {
             return 'pc:' + this.hex(this.regPC, 4) +
                 ' s:' + this.hex(this.regS, 4) +
@@ -283,7 +297,8 @@ module mc6809 {
             this.regB = 0;
             this.regDP = 0;
             this.regCC = F.FIRQMASK | F.IRQMASK;
-            this.regPC = (this.readByteROM(0xfffe) << 8) | this.readByteROM(0xffff);
+            this.regPC = 0;
+            this._goto((this.readByteROM(0xfffe) << 8) | this.readByteROM(0xffff));
         }
 
         public setStackAddress = (addr: number): void=> {
@@ -318,8 +333,7 @@ module mc6809 {
             this.pcCount++;
             return this.M6809ReadByte(this.regPC++);
         }
-        // var usAddr = this.M6809ReadWord\(this.regPC\);\s+this.regPC \+= 2;
-
+        
         private nextPCWord = (): number => {
             var word = this.M6809ReadWord(this.regPC);
             this.regPC += 2;
@@ -654,7 +668,7 @@ module mc6809 {
                 i += 2;
             }
             if (ucTemp & 0x80) {
-                this.regPC = this.M6809PULLW();
+                this._goto(this.M6809PULLW());
                 i += 2;
             }
             this.iClocks -= i; /* Add extra clock cycles (1 per byte) */
@@ -691,7 +705,7 @@ module mc6809 {
                 i += 2;
             }
             if (ucTemp & 0x80) {
-                this.regPC = this.M6809PULLWU();
+                this._goto(this.M6809PULLWU());
                 i += 2;
             }
             this.iClocks -= i; /* Add extra clock cycles (1 per byte) */
@@ -712,7 +726,7 @@ module mc6809 {
                 this.M6809PUSHB(this.regCC);
                 this.regCC |= F.FIRQMASK | F.IRQMASK; /* Mask interrupts during service routine */
                 this.iClocks -= 19;
-                this.regPC = this.M6809ReadWord(0xfffc);
+                this._goto(this.M6809ReadWord(0xfffc));
                 interruptRequest &= ~INT_NMI; /* clear this bit */
                 console.log(this.state());
                 return interruptRequest;
@@ -726,7 +740,7 @@ module mc6809 {
                 interruptRequest &= ~INT_FIRQ; /* clear this bit */
                 this.regCC |= F.FIRQMASK | F.IRQMASK; /* Mask interrupts during service routine */
                 this.iClocks -= 10;
-                this.regPC = this.M6809ReadWord(0xfff6);
+                this._goto(this.M6809ReadWord(0xfff6));
                 console.log(this.state());
                 return interruptRequest;
             }
@@ -743,7 +757,7 @@ module mc6809 {
                 this.regCC |= 0x80; /* Set bit indicating machine state on stack */
                 this.M6809PUSHB(this.regCC);
                 this.regCC |= F.IRQMASK; /* Mask interrupts during service routine */
-                this.regPC = this.M6809ReadWord(0xfff8);
+                this._goto(this.M6809ReadWord(0xfff8));
                 interruptRequest &= ~INT_IRQ; /* clear this bit */
                 this.iClocks -= 19;
                 console.log(this.state());
@@ -755,6 +769,16 @@ module mc6809 {
         public toggleDebug = (): void=> {
             this.debug = !this.debug;
             console.log("debug " + this.debug);
+        }
+
+        private _goto = (usAddr: number): void => {
+            if (usAddr == 0xFFB3) {
+                console.log("PC from " + this.regPC.toString(16) + " -> " + usAddr.toString(16));
+                if (this.getRegD() > 0x9800) {
+                    console.log('off screen??? ' + this.getRegD().toString(16));
+                }
+            }
+            this.regPC = usAddr;
         }
 
         private _flagnz = (val: number): void=> {
@@ -1003,7 +1027,7 @@ module mc6809 {
         private dec = () => { this.dpOp(this._dec); }
         private inc = () => { this.dpOp(this._inc); }
         private tst = () => { this.dpOp(this._tst); }
-        private jmp = () => { this.regPC = this.dpAddr(); }
+        private jmp = () => { this._goto(this.dpAddr()); }
         private clr = () => { this._clr(this.dpAddr()); }
 
         /* P10  extended Op codes */
@@ -1131,7 +1155,7 @@ module mc6809 {
             this.M6809PUSHB(this.regA);
             this.M6809PUSHB(this.regB);
             this.M6809PUSHB(this.regCC);
-            this.regPC = this.M6809ReadWord(0xfff4);
+            this._goto(this.M6809ReadWord(0xfff4));
         }
 
         private cmpd = () => { // 0x83: /* CMPD - immediate*/
@@ -1361,7 +1385,7 @@ module mc6809 {
             this.M6809PUSHB(this.regA);
             this.M6809PUSHB(this.regB);
             this.M6809PUSHB(this.regCC);
-            this.regPC = this.M6809ReadWord(0xfff2);
+            this._goto(this.M6809ReadWord(0xfff2));
         }
 
         private cmpu = () => { // 0x83: /* CMPU - immediate */
@@ -1607,7 +1631,7 @@ module mc6809 {
                     if (bExchange) {
                         this._setreg(srname, this.regPC);
                     }
-                    this.regPC = srcval;
+                    this._goto(srcval);
                     break;
                 case 0x8: /* A */
                     // console.log('EXG dst: A=' + this.regA.toString(16));
@@ -1771,7 +1795,7 @@ module mc6809 {
             this.M6809PULU(ucTemp);
         }
 
-        private rts = (): void=> { this.regPC = this.M6809PULLW(); }
+        private rts = (): void=> { this._goto(this.M6809PULLW()); }
 
         private abx = (): void=> { this.regX += this.regB; }
 
@@ -1786,7 +1810,7 @@ module mc6809 {
                 this.regY = this.M6809PULLW();
                 this.regU = this.M6809PULLW();
             }
-            this.regPC = this.M6809PULLW();
+            this._goto(this.M6809PULLW());
         }
 
         private cwai = (): void=> {
@@ -1817,7 +1841,7 @@ module mc6809 {
             this.M6809PUSHB(this.regA);
             this.M6809PUSHB(this.regCC);
             this.regCC |= 0x50; /* Disable further interrupts */
-            this.regPC = this.M6809ReadWord(0xfffa);
+            this._goto(this.M6809ReadWord(0xfffa));
         }
 
         private nega = (): void=> {
@@ -1958,7 +1982,7 @@ module mc6809 {
         }
 
         private jmpi = (): void=> { //0x6E: /* JMP - indexed */
-            this.regPC = this.M6809PostByte();
+            this._goto(this.M6809PostByte());
         }
 
         private clri = (): void=> { //0x6F: /* CLR - indexed */
@@ -2021,7 +2045,7 @@ module mc6809 {
         }
 
         private jmpe = (): void=> { //0x7E: /* JMP - extended */
-            this.regPC = this.M6809ReadWord(this.regPC);
+            this._goto(this.M6809ReadWord(this.regPC));
         }
 
         private clre = (): void=> { //0x7F: /* CLR - extended */
@@ -2105,100 +2129,100 @@ module mc6809 {
         }
 
         private subad = (): void=> { //0x90: /* SUBA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._sub(this.regA, ucTemp);
         }
 
         private cmpad = (): void=> { //0x91: /* CMPA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var ucTemp = this.M6809ReadByte(usAddr);
             this._cmp(this.regA, ucTemp);
         }
 
         private sbcad = (): void=> { //0x92: /* SBCA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._sbc(this.regA, ucTemp);
         }
 
         private subdd = (): void=> { //0x93: /* SUBD - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var usTemp = this.M6809ReadWord(usAddr);
             this.setRegD(this._sub16(this.getRegD(), usTemp));
         }
 
         private andad = (): void=> { //0x94: /* ANDA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._and(this.regA, ucTemp);
         }
 
         private bitad = (): void=> { //0x95: /* BITA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             var ucTemp = this.M6809ReadByte(usAddr);
             this._and(this.regA, ucTemp);
         }
 
         private ldad = (): void=> { //0x96: /* LDA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             this.regA = this.M6809ReadByte(usAddr);
             this.regCC &= ~(F.ZERO | F.NEGATIVE | F.OVERFLOW);
             this._flagnz(this.regA);
         }
 
         private stad = (): void=> { //0x97: /* STA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             this.M6809WriteByte(usAddr, this.regA);
             this.regCC &= ~(F.ZERO | F.NEGATIVE | F.OVERFLOW);
             this._flagnz(this.regA);
         }
 
         private eorad = (): void=> { //0x98: /* EORA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._eor(this.regA, ucTemp);
         }
 
         private adcad = (): void=> { //0x99: /* ADCA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._adc(this.regA, ucTemp);
         }
 
         private orad = (): void=> { //0x9A: /* ORA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._or(this.regA, ucTemp);
         }
 
         private addad = (): void=> { //0x9B: /* ADDA - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             var ucTemp = this.M6809ReadByte(usAddr);
             this.regA = this._add(this.regA, ucTemp);
         }
 
         private cmpxd = (): void=> { //0x9C: /* CMPX - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             var usTemp = this.M6809ReadWord(usAddr);
             this._cmp16(this.regX, usTemp);
         }
 
         private jsrd = (): void=> { //0x9D: /* JSR - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             this.M6809PUSHW(this.regPC);
-            this.regPC = usAddr;
+            this._goto(usAddr);
         }
 
         private ldxd = (): void=> { //0x9E: /* LDX - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte();
             this.regX = this.M6809ReadWord(usAddr);
             this._flagnz16(this.regX);
             this.regCC &= ~F.OVERFLOW;
         }
 
         private stxd = (): void=> { //0x9F: /* STX - direct */
-            var usAddr = this.regDP * 256 + this.nextPCByte(); /* Address of byte to negate */
+            var usAddr = this.regDP * 256 + this.nextPCByte(); 
             this.M6809WriteWord(usAddr, this.regX);
             this._flagnz16(this.regX);
             this.regCC &= ~F.OVERFLOW;
@@ -2287,7 +2311,7 @@ module mc6809 {
         private jsrx = (): void=> { //0xAD: /* JSR - indexed */
             var usAddr = this.M6809PostByte();
             this.M6809PUSHW(this.regPC);
-            this.regPC = usAddr;
+            this._goto(usAddr);
         }
 
         private ldxx = (): void=> { //0xAE: /* LDX - indexed */
@@ -2376,7 +2400,7 @@ module mc6809 {
         private jsre = (): void=> { //0xBD: /* JSR - extended */
             var usAddr = this.nextPCWord();
             this.M6809PUSHW(this.regPC);
-            this.regPC = usAddr;
+            this._goto(usAddr);
         }
 
         private ldxe = (): void=> { //0xBE: /* LDX - extended */
