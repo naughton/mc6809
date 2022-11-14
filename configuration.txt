@@ -1,0 +1,114 @@
+Path: wiretap.spies.com!sgiblab!spool.mu.edu!howland.reston.ans.net!pipex!demon!hatstand.demon.co.uk!aaron
+Newsgroups: rec.games.video.arcade.collecting
+From: aaron@hatstand.demon.co.uk (Aaron Liddiment)
+References: <bskendigD1DwKq.J66@netcom.com> <hshubsD1EH5t.F4w@netcom.com> <bskendigD1EIxv.HMs@netcom.com>
+Organization: Very Silly Party
+X-Newsreader: TIN [version 1.2 PL2]
+Subject: Re: How do I configure Defender? (Macintosh version)
+X-Posting-Host: hatstand.demon.co.uk
+Date: Tue, 3 Jan 1995 00:00:55 +0000
+Message-ID: <9404052230.AA0005l@hatstand.demon.co.uk>
+Sender: usenet@demon.co.uk
+Lines: 101
+
+Brian Kendig (bskendig@netcom.com) wrote:
+
+: Could someone who has the Defender arcade manual please sum up the finer
+: points of its coverage of game options?  I'd be happy to forward that on
+: to the usual Mac archive sites!
+
+The following info is taken straight from the Williams booklet on Defender.
+
+
+BOOKKEEPING AND EVALUATION TOTALS (Functions 1-7)
+=================================================
+1. In game over mode, set switch to AUTO-UP and depress ADVANCE. The CRT
+   indicates Function 1 and total left chute coins.
+2. Record audit totals and depress ADVANCE for functions 1-7. To review a
+   total that has been advanced past, set switch to MANUAL-DOWN and depress
+   ADVANCE. Functions are displayed one at a time as follows:-
+
+      Function    Total    Description
+      --------------------------------
+		 1          0      (Total) COINS LEFT
+         2          0      (Total) COINS CENTER
+         3          0      (Total) COINS RIGHT
+         4          0      TOTAL PAID (Games)
+         5          0      (Total Bonus) SHIPS WON
+         6          0      TOTAL (Play) TIME (Minutes)
+         7          0      TOTAL SHIPS (Played)
+			
+3. Operate ADVANCE to display Function 28, SPECIAL FUNCTION. From Function
+   28 you can return to game over or zero audit totals and return to game
+   over.
+4. With switch set to AUTO-UP, perform a. or b. as desired.
+      a. To return to game over depress ADVANCE.
+      b. To zero audit totals and return to game over, operate HIGH SCORE
+         RESET to indicate "35" on CRT Function 28 and then depress ADVANCE.
+
+GAME ADJUSTMENTS (Functions 8-27)
+=================================
+1. In game over mode set switch to AUTO_UP and then depress ADVANCE. The CRT
+   indicates Function 1 and total left chute coins.
+2. To raise Function number on CRT, operate ADVANCE pushbutton with switch
+   set to AUTO-UP. To lower Function number operate ADVANCE with it set to
+   MANUAL-DOWN.
+3. With desired Function indicated, raise adjustment value by operating HIGH
+   SCORE RESET with switch set to AUTO-UP; lower value by operating HIGH
+   SCORE RESET with it set to MANUAL-DOWN. Value left on CRT is new setting.
+   For values, see below and, for pricing, Table 1.
+
+      Function   Factory Setting   Description
+      ----------------------------------------
+         08           10000        BONUS SHIP LEVEL (0=No Bonus Ships)
+         09               3        SHIPS PER GAME
+         10               3        COINAGE SELECT
+         11               1        LEFT COIN MULT
+         12               4        CENTER COIN MULT
+         13               1        RIGHT COIN MULT
+         14               1        COINS FOR CREDIT
+         15               0        COINS FOR BONUS
+         16               0        MINIMUM COINS
+         17               0        FREE PLAY (Set to 1 for Free Play)
+         18               0        STARTING DIFFICULTY (0=LIB; 1=MOD; 2=CONS)
+         19              10        PROGRESSIVE WAVE DIFFICULTY LIMIT (4-25)
+                                   e.g. 5-LIB; 10=MOD; 15=CONS;
+         20               1        BACKGROUND SOUND (0=OFF; 1=ON)
+         21               5        PLANET RESTORE WAVE NUMBER
+         22               0        NOT USED
+         23               0        NOT USED
+         24               0        NOT USED
+         25               0        NOT USED
+         26               0        NOT USED
+         27               0        NOT USED
+
+4. Repeat steps 2 and 3 until all desired adjustments have been made.
+5. Operate ADVANCE until 28 0 SPECIAL FUNCTION is indicated on CRT. From
+   Function 28 you can return to game over or restore factory settings.
+   Perform step 6 or 7 as desired.
+6. To return to game over, depress ADVANCE with switch set to AUTO-UP.
+7. To restore factory settings and zero audit totals:
+   a. Operate HIGH SCRORE RESET in AUTO-UP to indicate "45" on CRT Function
+      28.
+   b. Depress ADVANCE. The game returns to audit Function 1.
+	c. Set switch to MANUAL-DOWN and depress ADVANCE to indicate Function 28
+      on the CRT.
+   d. Set switch to AUTO-UP and depress ADVANCE.
+
+RESETTING HIGH SCORE FEATURE
+============================
+To reset the high score to the factory settings and erase signatures,
+depress HIGH SCORE RESET in game over mode.
+
+
+Well thats it for the Special Functions, I hope you find this of use :-)
+
+I have been trying to find out more info on the company producing this
+MAC emulator as I would love to get hold of it for my Amiga. Does anyone
+know if they are going to do it or not? If they are not, then I would be
+very interested in converting it for them as I am a programmer by trade.
+Any help with this quest would be much appreciated.
+My full email address is aaron@hatstand.demon.co.uk
+
+Later
+Aaron

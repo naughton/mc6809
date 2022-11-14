@@ -1,4 +1,4 @@
-// Copyright © 2014-2021 - Patrick Naughton
+// Copyright © 2014-2022 - Patrick Naughton
 
 let game: Defender.Game;
 
@@ -46,7 +46,7 @@ module Defender {
       [0xff, 0xff, 0xff],
       [0xff, 0xff, 0xff],
       [0xff, 0xff, 0xff],
-      [0xff, 0xff, 0xff],
+      [0xff, 0xff, 0xff]
     ];
     private roms: mc6809.ROM[] = [
       new mc6809.ROM("defender/defend.1", new mc6809.MemBlock(0xd000, 0x0800)),
@@ -63,12 +63,10 @@ module Defender {
       new mc6809.ROM("defender/defend.7", new mc6809.MemBlock(0x3000, 0x0800)),
       new mc6809.ROM("defender/defend.10", new mc6809.MemBlock(0x3800, 0x0800)),
       // bank 7
-      new mc6809.ROM("defender/defend.6", new mc6809.MemBlock(0x7000, 0x0800)),
+      new mc6809.ROM("defender/defend.6", new mc6809.MemBlock(0x7000, 0x0800))
     ];
 
-    private KEY_STATUS: { [key: string]: boolean } = {
-      keyDown: false,
-    };
+    private KEY_STATUS: { [key: string]: boolean } = {};
 
     private cmos = new Uint8Array(0x200);
 
@@ -77,7 +75,7 @@ module Defender {
       this.cpu = new mc6809.Emulator();
       console.log(`Williams Defender ${this.roms.length} RED ROMS`);
       for (const rom of this.roms) {
-        this.load(rom);
+        this.loadRom(rom);
       }
 
       this.canvas = <HTMLCanvasElement>document.getElementById("mainCanvas");
@@ -101,12 +99,12 @@ module Defender {
       this.imageData = this.ctx.createImageData(this.w, this.h);
 
       document.addEventListener("keydown", (e: KeyboardEvent) => {
-        this.KEY_STATUS.keyDown = true;
-        this.KEY_STATUS[e.key] = true;
+        if (!e.repeat) {
+          this.KEY_STATUS[e.key] = true;
+        }
         e.preventDefault();
       });
       document.addEventListener("keyup", (e: KeyboardEvent) => {
-        this.KEY_STATUS.keyDown = false;
         this.KEY_STATUS[e.key] = false;
         e.preventDefault();
       });
@@ -118,9 +116,7 @@ module Defender {
       var bank = new mc6809.MemBlock(0xc000, 0x1000, this.bankRead, this.bankWrite);
       var page = new mc6809.MemBlock(0xd000, 1, this.bankSelectRead, this.bankSelectWrite);
 
-      var mmap = [ram, rom, bank, page];
-      this.cpu.setMemoryMap(mmap);
-
+      this.cpu.setMemoryMap([ram, rom, bank, page]);
       this.cpu.setStackAddress(0xbfff);
       this.cpu.reset();
       this.dump();
@@ -147,7 +143,7 @@ module Defender {
             var g = Math.round((255 * ((val >> 3) & 7)) / 8);
             var r = Math.round((255 * (val & 7)) / 8);
             var pixel = [r, g, b];
-            console.log("Set color palette(" + colorindex + ") = " + pixel);
+            // console.log("Set color palette(" + colorindex + ") = " + pixel);
             this.pallete[colorindex] = pixel;
           } else if (addr >= 0xc400 && addr <= 0xc5ff) {
             var cmosaddr = addr - 0xc400;
@@ -191,9 +187,15 @@ module Defender {
       console.log(this.cpu.state());
     };
 
+    private ioReadCounter = 0;
+
     private ioRead = (addr: number): number => {
       switch (addr) {
         case 0xcc00: // cc00 pia1_dataa (widget = I/O board)
+          if (this.ioReadCounter++ < 1000) {
+            return this.last_pia1_dataa;
+          }
+          this.ioReadCounter = 0;
           /*
             bit 0  Auto/Up - or Manual/Down
             bit 1  Advance
@@ -208,6 +210,14 @@ module Defender {
           var highscorereset = this.KEY_STATUS["F4"] ? 8 : 0;
           var leftcoin = this.KEY_STATUS["F5"] ? 16 : 0;
           var centercoin = this.KEY_STATUS["F6"] ? 32 : 0;
+
+          this.KEY_STATUS["F1"] = false;
+          this.KEY_STATUS["F2"] = false;
+          this.KEY_STATUS["F3"] = false;
+          this.KEY_STATUS["F4"] = false;
+          this.KEY_STATUS["F5"] = false;
+          this.KEY_STATUS["F6"] = false;
+
           var pia1_dataa = autoup | advance | rightcoin | highscorereset | leftcoin | centercoin;
 
           if (pia1_dataa != this.last_pia1_dataa) {
@@ -218,10 +228,12 @@ module Defender {
             this.leftcoinCheck.checked = leftcoin > 0;
             this.centercoinCheck.checked = centercoin > 0;
             this.last_pia1_dataa = pia1_dataa;
+            console.log("ioRead pia1_dataa");
           }
           return pia1_dataa;
 
         case 0xcc04:
+          console.log("ioRead pia2_dataa");
           var fire = this.KEY_STATUS[" "] ? 1 : 0;
           var thrust = this.KEY_STATUS["ArrowRight"] ? 2 : 0;
           var smartbomb = this.KEY_STATUS["End"] ? 4 : 0;
@@ -245,7 +257,7 @@ module Defender {
           if (addr >= 0xc400 && addr <= 0xc5ff) {
             var cmosaddr = addr - 0xc400;
             const value = this.cmos[cmosaddr];
-            //console.log(`read from CMOS ${cmosaddr.toString(16)} = ${value}`);
+            console.log(`read from CMOS ${cmosaddr.toString(16)} = ${value}`);
             return value;
           }
           console.log("PIO read from " + addr.toString(16));
@@ -283,7 +295,7 @@ module Defender {
       return this.cpu.readByteROM(0xd000);
     };
 
-    private load = (rom: mc6809.ROM) => {
+    private loadRom = (rom: mc6809.ROM) => {
       this.pendingRomLoads++;
       var xhr = new XMLHttpRequest();
       xhr.open("GET", rom.name, true);
