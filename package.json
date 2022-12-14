@@ -26,7 +26,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "express": "^4.18.1"
+    "express": "^4.17.3"
   },
   "prettier": {
     "printWidth": 200,
