@@ -1,65 +1,21 @@
-<html>
-<head>
-    <script src="mc6809.js"></script>
-    <script src="defender.js"></script>
-    <style type="text/css">
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: #0f0;
-        }
-        canvas {
-            border: 1px solid #333;
-            background: black;
-            image-rendering: optimizeSpeed;
-            image-rendering:-o-crisp-edges;
-            image-rendering:-webkit-optimize-contrast;
-            -ms-interpolation-mode: nearest-neighbor;
-        }
-        #debugTxt {
-            font-family: Consolas, 'Lucida Console', 'DejaVu Sans Mono', monospace;
-        }
-        textarea {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: orange;
-        }
-
-        input {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            font-family: Consolas, 'Lucida Console', 'DejaVu Sans Mono', monospace;
-            font-weight: bold;
-            color: hotpink;
-        }
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <title>Defender (MC6809 Emulator)</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: #0f0;
+        font-family: Consolas, monospace;
+      }
     </style>
-    <title>
-        Defender (6809 Emulator)
-    </title>
-</head>
-<body>
-    <canvas id="mainCanvas" width="304" height="256">
-    </canvas>
-    <br/>
-    <button onclick="game.blit()">Blit</button>
-    <button onclick="game.step(1)">Step</button>
-    <button onclick="game.step(16)">Step16</button>
-    <button onclick="game.step(256)">Step256</button>
-    <button onclick="game.run()">Run</button>
-    <button onclick="game.halt()">Halt</button>
-    <button onclick="game.debug()">Debug</button>
-
-    <input id="breakpoint" />
-    <div id="debugTxt"></div>
-    <input id="autoup" title="auto up" type="checkbox" />
-    <input id="advance" title="advance" type="checkbox" />
-    <input id="rightcoin" title="right coin" type="checkbox" />
-    <input id="highscorereset" title="reset high score" type="checkbox" />
-    <input id="leftcoin" title="left coin" type="checkbox" />
-    <input id="centercoin" title="center coin" type="checkbox" />
-    <div id="timeTxt"></div>
-</body>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
