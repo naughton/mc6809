@@ -14,6 +14,7 @@
 import { Emulator, MemBlock, ROM } from "../cpu/cpu";
 import { Cmos } from "./cmos";
 import { OperatorInputs, PlayerInputs } from "./inputs";
+import { Sound } from "./sound";
 import { Palette, blit, initialPalette, paletteEntryFromByte } from "./video";
 
 const ROM_LAYOUT: { name: string; start: number; len: number }[] = [
@@ -57,6 +58,9 @@ export class Game {
   private romBaseUrl: string;
   private onTime?: (ms: number) => void;
 
+  // Sound board (6808 + PIA + audio out).
+  public sound: Sound;
+
   private running = false;
   private rafHandle: number | null = null;
   private breakpoint = 0;
@@ -64,6 +68,7 @@ export class Game {
   constructor(opts: GameOptions) {
     this.cpu = new Emulator();
     this.cmos = new Cmos();
+    this.sound = new Sound();
     this.canvas = opts.canvas;
     this.operatorRef = opts.operatorRef;
     this.playerRef = opts.playerRef;
@@ -79,7 +84,10 @@ export class Game {
 
   async load(): Promise<void> {
     const roms = ROM_LAYOUT.map((r) => new ROM(this.romBaseUrl + r.name, new MemBlock(r.start, r.len)));
-    await Promise.all(roms.map((r) => this.loadRom(r)));
+    await Promise.all([
+      ...roms.map((r) => this.loadRom(r)),
+      this.sound.load(this.romBaseUrl + "defend.snd"),
+    ]);
 
     const ram = new MemBlock(0x0000, 0xc000);
     const rom = new MemBlock(0xd000, 0x3000);
@@ -203,6 +211,11 @@ export class Game {
   private irqArmed = false;
 
   private piaWrite = (index: number, val: number): void => {
+    if (index === 2) {
+      // pia1_datab — low 6 bits are the sound-board command. The main CPU
+      // strobes this to feed defend.snd's IRQ handler.
+      this.sound.command(val & 0x3f);
+    }
     if (index === 7) {
       this.irqArmed = (val & 0x01) !== 0;
     }
@@ -277,6 +290,9 @@ export class Game {
   // Total CPU cycles to execute per rAF tick. ~67000 ≈ 4× the real 1 MHz
   // Defender CPU; lower toward 16667 for real-speed.
   private cyclesPerTick = 67000;
+  // Last performance.now() at the start of tick(), for the sound CPU's
+  // wall-clock advancement. 0 = first tick.
+  private lastWallTime = 0;
   setSpeed = (cyclesPerTick: number): void => {
     this.cyclesPerTick = Math.max(1000, cyclesPerTick | 0);
     console.log(`speed: ${this.cyclesPerTick} cycles/tick (~${(this.cyclesPerTick / 16667).toFixed(2)}× real)`);
@@ -306,7 +322,13 @@ export class Game {
       this.videoCounter = (this.videoCounter + 0x40) & 0xfc;
       if (this.cpu.halted) break;
     }
-    const took = performance.now() - start;
+    // Sound CPU runs at *real* wall-clock time, decoupled from the main CPU
+    // overclock. Use the rAF interval; clamp inside Sound for tab-restore.
+    const wallNow = performance.now();
+    const wallDelta = this.lastWallTime === 0 ? 16.7 : wallNow - this.lastWallTime;
+    this.lastWallTime = wallNow;
+    this.sound.tick(wallDelta);
+    const took = wallNow - start;
     this.onTime?.(took);
     this.blit();
     if (this.cpu.halted) {
