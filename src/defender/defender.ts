@@ -72,7 +72,9 @@ export class Game {
     this.canvas = opts.canvas;
     this.operatorRef = opts.operatorRef;
     this.playerRef = opts.playerRef;
-    this.romBaseUrl = opts.romBaseUrl ?? "/defender/";
+    // Prefix with Vite's BASE_URL so this works both at "/" (dev) and at
+    // "/mc6809/" (GitHub Pages). BASE_URL always has a trailing slash.
+    this.romBaseUrl = opts.romBaseUrl ?? `${import.meta.env.BASE_URL}defender/`;
     this.onTime = opts.onTime;
 
     const ctx = this.canvas.getContext("2d");
