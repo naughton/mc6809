@@ -226,13 +226,50 @@ export class Emulator {
       this.iClocks -= c6809Cycles[ucOpcode]; /* Subtract execution time */
       if (this.debug) console.log((this.regPC - 1).toString(16) + ": " + this.mnemonics[ucOpcode]);
 
+      const sBefore = this.regS;
+      const pcBefore = (this.regPC - 1) & 0xffff;
       const instruction = this.instructions[ucOpcode];
       if (instruction == null) {
-        console.log("*** illegal opcode: " + ucOpcode.toString(16) + " at " + (this.regPC - 1).toString(16));
+        // Forensics: bytes around the bad PC, register dump, top-of-stack.
+        // PC-walks-off-into-data is almost always RTS or RTI pulling a wrong
+        // return address — the system stack contents are the breadcrumb.
+        const badPC = (this.regPC - 1) & 0xffff;
+        const ctx: number[] = [];
+        for (let i = -8; i <= 8; i++) ctx.push(this.M6809ReadByte((badPC + i) & 0xffff));
+        const stack: number[] = [];
+        for (let i = 0; i < 16; i++) stack.push(this.M6809ReadByte((this.regS + i) & 0xffff));
+        console.log(
+          `*** illegal opcode $${ucOpcode.toString(16)} at $${badPC.toString(16)}\n` +
+            `    bytes around PC: ${ctx.map((b) => b.toString(16).padStart(2, "0")).join(" ")}\n` +
+            `    state: ${this.state()}\n` +
+            `    stack@S: ${stack.map((b) => b.toString(16).padStart(2, "0")).join(" ")}`,
+        );
         this.iClocks = 0;
         this.halt();
       } else {
         instruction();
+        // First-time stack-bounds breach: S left RAM. Defender RAM is
+        // $0000-$BFFF, so anything $C000 or higher means an unbalanced push
+        // (or a bad LDS / PULU-with-S-bit / PSHU corrupting S). Log once with
+        // the instruction that broke it; further violations are silent so we
+        // don't flood the console while the CPU dies its slow death.
+        if (!this.stackBreached && this.regS >= 0xc000) {
+          this.stackBreached = true;
+          // For page-2 ($10) and page-3 ($11) prefixes, the next byte is the
+          // actual sub-opcode. The instruction handler advanced PC past it,
+          // so it's at pcBefore+1.
+          const sub = ucOpcode === 0x10 || ucOpcode === 0x11 ? this.M6809ReadByte((pcBefore + 1) & 0xffff) : null;
+          // Dump the 4 bytes starting at the instruction so we can decode
+          // it by hand and see if there's a wrong operand.
+          const insnBytes: number[] = [];
+          for (let i = 0; i < 6; i++) insnBytes.push(this.M6809ReadByte((pcBefore + i) & 0xffff));
+          console.warn(
+            `[stack-breach] S=$${this.regS.toString(16)} (was $${sBefore.toString(16)}, delta ${this.regS - sBefore})\n` +
+              `    instruction at $${pcBefore.toString(16)}: ${insnBytes.map((b) => b.toString(16).padStart(2, "0")).join(" ")}` +
+              (sub !== null ? ` (page-${ucOpcode === 0x10 ? "2" : "3"} sub-opcode $${sub.toString(16)})` : "") +
+              `\n    state: ${this.state()}`,
+          );
+        }
       }
     }
   };
@@ -283,6 +320,7 @@ export class Emulator {
   };
 
   public halted: boolean = false;
+  private stackBreached = false;
   public halt = () => {
     this.halted = true;
     this.iClocks = 0;

@@ -303,17 +303,15 @@ export class Game {
   // IRQ slice (4 slices/tick) gives one full sweep per frame.
   private videoCounter = 0;
 
-  // Total CPU cycles to execute per rAF tick. 33000 ≈ 2× the real 1 MHz
-  // Defender CPU — sweet spot between "feels snappy" and "true arcade speed".
-  // Tune live with game.setSpeed(N).
-  private cyclesPerTick = 33000;
+  // Total CPU cycles to execute per rAF tick. ~4× the real 1 MHz Defender
+  // CPU. Doesn't visibly affect game speed — game logic runs in the IRQ
+  // handler at a fixed 240 Hz — but going lower starves the main loop
+  // between IRQs and can destabilize timing-sensitive ROM code, so we leave
+  // it on the high side.
+  private static readonly CYCLES_PER_TICK = 67000;
   // Last performance.now() at the start of tick(), for the sound CPU's
   // wall-clock advancement. 0 = first tick.
   private lastWallTime = 0;
-  setSpeed = (cyclesPerTick: number): void => {
-    this.cyclesPerTick = Math.max(1000, cyclesPerTick | 0);
-    console.log(`speed: ${this.cyclesPerTick} cycles/tick (~${(this.cyclesPerTick / 16667).toFixed(2)}× real)`);
-  };
 
   private tick = (): void => {
     if (!this.running) return;
@@ -328,12 +326,8 @@ export class Game {
     // Williams hardware fires 4 IRQs per video frame off the scanline counter.
     // Slice the per-tick cycle budget into 4 quarters so we deliver IRQ +
     // advance the video counter at each quarter boundary (~240Hz IRQ rate).
-    //
-    // Real Defender CPU runs at 1 MHz → 16667 cycles per 60Hz frame. We
-    // default to 4× that (66667) for a snappy-but-recognizable feel; tune
-    // with game.setSpeed(cyclesPerTick) from the console.
     const irq = this.irqArmed ? Game.INT_IRQ : 0;
-    const sliceCycles = (this.cyclesPerTick / 4) | 0;
+    const sliceCycles = (Game.CYCLES_PER_TICK / 4) | 0;
     for (let i = 0; i < 4; i++) {
       this.cpu.execute(sliceCycles, irq, this.breakpoint);
       this.videoCounter = (this.videoCounter + 0x40) & 0xfc;
