@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const EmulatorCanvas = forwardRef<HTMLCanvasElement, Props>(function EmulatorCanvas(
-  { width, height, scale = 2 },
+  { width, height, scale = 4 },
   ref,
 ) {
   return (

@@ -6,6 +6,23 @@
 const STORAGE_KEY = "mc6809.defender.cmos.v1";
 const SIZE = 0x200;
 
+// Pre-baked working CMOS dump. Defender's first-boot path checks for valid
+// configuration here; without it, the board enters operator setup. This was
+// captured from a known-good local session — any user with empty localStorage
+// (e.g. a fresh visit to the deployed site) gets these defaults so the game
+// boots straight into attract.
+const DEFAULT_CMOS_BASE64 =
+  "AAAAAAAAAAAAAAAAAwAAAAMAAAAAAAAAAAAAAAIAAgESB3AERAVSBEoAAQiDARUFUwRBBE0AAQVZAiAETARFBEQA" +
+  "AQRCCIUFUARHBEQAAQIlAiAEQwVSBEIAAQEQAzUETQVSBVMAAAiCBmUFUwVTBVIAAAZgARAFVARNBEgAAgVaAAEA" +
+  "AAADAAMAAQAEAAEAAQAAAAAAAAAFARUAAQAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
+  "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
 export class Cmos {
   private bytes: Uint8Array;
 
@@ -50,15 +67,24 @@ export class Cmos {
 
   private load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      const raw = localStorage.getItem(STORAGE_KEY) ?? DEFAULT_CMOS_BASE64;
       const decoded = atob(raw);
       const len = Math.min(decoded.length, SIZE);
       for (let i = 0; i < len; i++) {
         this.bytes[i] = decoded.charCodeAt(i);
       }
     } catch {
-      // Ignore corrupt or missing data.
+      // Corrupt localStorage entry — fall back to the baked defaults so the
+      // game still boots straight into attract.
+      try {
+        const decoded = atob(DEFAULT_CMOS_BASE64);
+        const len = Math.min(decoded.length, SIZE);
+        for (let i = 0; i < len; i++) {
+          this.bytes[i] = decoded.charCodeAt(i);
+        }
+      } catch {
+        // Nothing more to do.
+      }
     }
   }
 }
