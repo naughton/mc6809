@@ -3,11 +3,10 @@ import type { OperatorInputs } from "../defender/inputs";
 interface Props {
   state: OperatorInputs;
   onToggleAutoUp: () => void;
-  onToggleHighScoreReset: () => void;
   onMomentary: (key: keyof OperatorInputs, down: boolean) => void;
 }
 
-export function OperatorPanel({ state, onToggleAutoUp, onToggleHighScoreReset, onMomentary }: Props) {
+export function OperatorPanel({ state, onToggleAutoUp, onMomentary }: Props) {
   const momentaryHandlers = (key: keyof OperatorInputs) => ({
     onMouseDown: () => onMomentary(key, true),
     onMouseUp: () => onMomentary(key, false),
@@ -21,11 +20,11 @@ export function OperatorPanel({ state, onToggleAutoUp, onToggleHighScoreReset, o
       <label title="F1 toggles. Must be ON to start a game.">
         <input type="checkbox" checked={state.autoUp} onChange={onToggleAutoUp} /> Auto-Up (F1)
       </label>
-      <label title="F4 toggles.">
-        <input type="checkbox" checked={state.highScoreReset} onChange={onToggleHighScoreReset} /> High-Score Reset (F4)
-      </label>
       <button {...momentaryHandlers("advance")} style={pressedStyle(state.advance)}>
         Advance (F2)
+      </button>
+      <button {...momentaryHandlers("highScoreReset")} style={pressedStyle(state.highScoreReset)}>
+        High-Score Reset (F4)
       </button>
       <button {...momentaryHandlers("rightCoin")} style={pressedStyle(state.rightCoin)}>
         Right Coin (F3)

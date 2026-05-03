@@ -114,11 +114,13 @@ export function App() {
       <EmulatorCanvas ref={canvasRef} width={304} height={256} />
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
         <button onClick={onToggleSound}>{soundOn ? "🔊 Sound ON" : "🔇 Sound OFF"}</button>
+        <button onClick={() => gameRef.current?.reset()} title="Cold-boot the CPU. Defender samples Auto-Up at reset.">
+          Reset
+        </button>
       </div>
       <OperatorPanel
         state={operator}
         onToggleAutoUp={() => updateOperator({ ...operatorRef.current, autoUp: !operatorRef.current.autoUp })}
-        onToggleHighScoreReset={() => updateOperator({ ...operatorRef.current, highScoreReset: !operatorRef.current.highScoreReset })}
         onMomentary={onMomentary}
       />
       <Controls />

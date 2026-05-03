@@ -47,6 +47,22 @@ export class Cmos {
     this.persist();
   }
 
+  // Wipe both the in-memory CMOS and the localStorage backing AND skip the
+  // baked default on the next load — so the next CPU reset boots into
+  // Defender's "factory uninitialized" path. Use this when walking operator
+  // setup to capture a fresh dump.
+  factoryReset(): void {
+    this.bytes.fill(0);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      // Stash a tombstone so load() doesn't replace zeros with the baked
+      // defaults next time.
+      localStorage.setItem(STORAGE_KEY, btoa("\0".repeat(SIZE)));
+    } catch {
+      // Ignore.
+    }
+  }
+
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private scheduleSave() {
     if (this.saveTimer !== null) return;

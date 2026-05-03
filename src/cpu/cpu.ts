@@ -330,9 +330,11 @@ export class Emulator {
         // console.log("Write RAM: " + addr.toString(16) + " = " + (ucByte & 0xff).toString(16));
         this.mem[addr + MEM_RAM] = ucByte & 0xff;
         break;
-      case 1 /* Normal ROM - nothing to do */:
-        console.log("******** Write ROM: from PC: " + this.regPC.toString(16) + "   " + addr.toString(16) + " = " + (ucByte & 0xff).toString(16));
-        this.mem[addr + MEM_ROM] = ucByte & 0xff; // write it to ROM anyway...
+      case 1 /* Normal ROM */:
+        // Real hardware silently swallows writes to ROM. We must NOT mutate
+        // the cart image — a stack underflow into ROM would otherwise
+        // permanently corrupt the program and send the CPU wandering into
+        // illegal opcodes a few instructions later.
         break;
       default:
         /* Call special handler routine for this address */

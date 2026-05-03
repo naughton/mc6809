@@ -271,6 +271,11 @@ export class Game {
     this.running = false;
     this.cpu.halted = false;
     this.irqArmed = false;
+    // Zero the 48KB main-CPU RAM mirror (Uint8Array offsets $10000-$1BFFF).
+    // Without this, stale data from the previous run — including the IRQ
+    // trampoline at $a08f — points at handlers that are no longer valid in
+    // the new boot mode, and the next IRQ walks into invalid code.
+    this.cpu.mem.fill(0, 0x10000, 0x1c000);
     this.cpu.reset();
     this.blit();
     if (wasRunning) this.run();
@@ -284,14 +289,24 @@ export class Game {
 
   isHalted = (): boolean => this.cpu.halted;
 
+  // Wipe CMOS to factory state (skips the baked-in default on next load).
+  // Call from DevTools, then click Reset with Auto-Up OFF to enter Defender's
+  // operator setup screens. After walking setup, dump the new value with:
+  //   localStorage.getItem("mc6809.defender.cmos.v1")
+  factoryResetCmos = (): void => {
+    this.cmos.factoryReset();
+    console.log("CMOS wiped. Uncheck Auto-Up, click Reset, then walk setup.");
+  };
+
   // Fake video counter — top 6 bits of a Williams scanline counter. The real
   // chip cycles through 256 values per frame at 60Hz; bumping by 0x40 per
   // IRQ slice (4 slices/tick) gives one full sweep per frame.
   private videoCounter = 0;
 
-  // Total CPU cycles to execute per rAF tick. ~67000 ≈ 4× the real 1 MHz
-  // Defender CPU; lower toward 16667 for real-speed.
-  private cyclesPerTick = 67000;
+  // Total CPU cycles to execute per rAF tick. 33000 ≈ 2× the real 1 MHz
+  // Defender CPU — sweet spot between "feels snappy" and "true arcade speed".
+  // Tune live with game.setSpeed(N).
+  private cyclesPerTick = 33000;
   // Last performance.now() at the start of tick(), for the sound CPU's
   // wall-clock advancement. 0 = first tick.
   private lastWallTime = 0;

@@ -89,14 +89,17 @@ export function playerKeyToField(key: string): keyof PlayerInputs | null {
   }
 }
 
-// Map momentary operator keys (F2/F3/F5/F6) to fields. F1/F4 are latched
-// toggles handled by the React UI on keydown.
+// Map momentary operator keys to fields. F1 is the only latched switch
+// (Auto-Up = panel toggle that holds state); the rest are real push buttons
+// on the operator panel — pressed once and they spring back.
 export function momentaryOperatorKeyToField(key: string): keyof OperatorInputs | null {
   switch (key) {
     case "F2":
       return "advance";
     case "F3":
       return "rightCoin";
+    case "F4":
+      return "highScoreReset";
     case "F5":
       return "leftCoin";
     case "F6":
@@ -106,8 +109,7 @@ export function momentaryOperatorKeyToField(key: string): keyof OperatorInputs |
   }
 }
 
-export function isLatchedOperatorKey(key: string): "autoUp" | "highScoreReset" | null {
+export function isLatchedOperatorKey(key: string): "autoUp" | null {
   if (key === "F1") return "autoUp";
-  if (key === "F4") return "highScoreReset";
   return null;
 }
